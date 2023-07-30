@@ -1,0 +1,6 @@
+{
+    "board": "arduino:avr:uno",
+    "programmer": "arduinoasisp",
+    "sketch": "truck_jack.ino",
+    "port": "/dev/tty.wlan-debug"
+}
