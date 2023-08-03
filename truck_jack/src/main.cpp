@@ -1,46 +1,77 @@
 #include <Arduino.h>
 
-const int forwardPin = 2;
-const int backwardPin = 3;
-const int motorPin = 4;
-const int buttonPin = 5;
+const int forwardMotordPin = 2;
+const int backwardMotorPin = 3;
+const int forwardCaptorPin = 4;
+const int backwardCaptorPin = 5;
+const int buttonPin = 6;
 
-int buttonState;
-int lastButtonState = HIGH;
-unsigned long pushTime = 0;
-unsigned long debounceDelay = 50;
-const int movementDelay = 1000;
+const int delayTime = 100;
 
-void setup() {
-  pinMode(forwardPin, OUTPUT);
-  pinMode(backwardPin, OUTPUT);
-  pinMode(motorPin, OUTPUT);
+enum MovementState {
+  FORWARD,
+  BACKWARD,
+  STOP
+};
+MovementState movementState = STOP;
+
+void moveForward();
+void moveBackward();
+void stopMovement();
+
+void setup() { 
+  Serial.print("hola");
+  pinMode(forwardMotordPin, OUTPUT);
+  pinMode(backwardMotorPin, OUTPUT);
+  pinMode(forwardCaptorPin, INPUT_PULLUP);
+  pinMode(backwardCaptorPin, INPUT_PULLUP);
   pinMode(buttonPin, INPUT_PULLUP);
 }
 
 void loop() {
-  buttonState = digitalRead(buttonPin);
-  if(buttonState==LOW && millis()-pushTime>debounceDelay) {
-    pushTime = millis();
-    go_forward();
-    go_backward();
-    stop();
+  int buttonState = digitalRead(buttonPin);
+  if(buttonState==LOW) {
+    if (movementState==STOP) {
+      movementState = FORWARD;
+    }
+    else {
+      movementState = STOP;
+    }
   }
-  lastButtonState = buttonState;
+  switch(movementState) {
+  case FORWARD:
+    moveForward();
+    break;
+  case BACKWARD:
+    moveBackward();
+    break;
+  case STOP:
+    stopMovement();
+    break;
+  }
 }
 
-void go_forward() {
-  digitalWrite(forwardPin, HIGH);
-  digitalWrite(backwardPin, LOW);
-  digitalWrite(motorPin, HIGH);
+void moveForward() {
+  digitalWrite(forwardMotordPin, HIGH);
+  digitalWrite(backwardMotorPin, LOW);
+  int forwardCaptorState = digitalRead(forwardCaptorPin);
+  if(forwardCaptorState==LOW) {
+    movementState = BACKWARD;
+    delay(delayTime);
+  }
 }
 
-void go_backward() {
-  digitalWrite(forwardPin, LOW);
-  digitalWrite(backwardPin, HIGH);
-  digitalWrite(motorPin, HIGH);
+void moveBackward() {
+  digitalWrite(forwardMotordPin, LOW);
+  digitalWrite(backwardMotorPin, HIGH);
+  int backwardCaptorState = digitalRead(backwardCaptorPin);
+  if(backwardCaptorState==LOW) {
+    movementState = STOP;
+    delay(delayTime);
+  }
 }
 
-void stop() {
-  digitalWrite(motorPin, LOW);
+void stopMovement() {
+  digitalWrite(forwardMotordPin, LOW);
+  digitalWrite(backwardMotorPin, LOW);
 }
